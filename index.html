@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark"> <!-- Permanent Dark Mode -->
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,174 +10,47 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // We will initialize Firebase in our main script
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     </script>
 
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #0d1117; 
-            color: #c9d1d9; 
-        }
-        
-        .neon-glow {
-            box-shadow: 0 0 5px rgba(79, 70, 229, 0.5), 0 0 10px rgba(147, 51, 234, 0.4);
-        }
-        
-        section, .modal-content, .note-card, #calculator {
-            background-color: #161b22;
-            border: 1px solid #30363d;
-        }
-
-        .transaction-item, .balance-item, .category-item {
-            background-color: #21262d;
-            border: 1px solid #30363d;
-        }
-
-        input, select, textarea {
-            background-color: #0d1117;
-            border-color: #30363d;
-            color: #c9d1d9;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-            outline: none;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; }
+        .neon-glow { box-shadow: 0 0 5px rgba(79, 70, 229, 0.5), 0 0 10px rgba(147, 51, 234, 0.4); }
+        section, .modal-content, .note-card, #calculator { background-color: #161b22; border: 1px solid #30363d; }
+        .transaction-item, .balance-item, .category-item { background-color: #21262d; border: 1px solid #30363d; }
+        input, select, textarea { background-color: #0d1117; border-color: #30363d; color: #c9d1d9; }
+        input:focus, select:focus, textarea:focus { border-color: #4f46e5; box-shadow: 0 0 0 1px #4f46e5; outline: none; }
         h1, h2, #summary-budget, #summary-goal, .modal-content h2, .total-label { color: #f0f6fc; }
-        
         #period-display { color: #a5b4fc; }
-        
-        .primary-btn {
-            background-image: linear-gradient(to right, #4f46e5, #c026d3);
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 8px rgba(192, 38, 211, 0.4);
-        }
-        .primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(192, 38, 211, 0.6);
-        }
-
-        .secondary-btn { 
-            background-color: #21262d; 
-            color: #8b949e; 
-            border-color: #30363d;
-            transition: all 0.2s ease;
-        }
-        .secondary-btn:hover { 
-            background-color: #30363d;
-            border-color: #8b949e;
-            color: #c9d1d9;
-        }
-
+        .primary-btn { background-image: linear-gradient(to right, #4f46e5, #c026d3); border: none; transition: all 0.3s ease; box-shadow: 0 0 8px rgba(192, 38, 211, 0.4); }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(192, 38, 211, 0.6); }
+        .secondary-btn { background-color: #21262d; color: #8b949e; border-color: #30363d; transition: all 0.2s ease; }
+        .secondary-btn:hover { background-color: #30363d; border-color: #8b949e; color: #c9d1d9; }
         #main-nav { position: relative; }
-        .nav-btn { 
-            padding: 0.5rem 1rem; 
-            font-size: 0.875rem; 
-            font-weight: 500; 
-            transition: color 0.3s; 
-            z-index: 10; 
-            color: #8b949e; 
-        }
+        .nav-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; transition: color 0.3s; z-index: 10; color: #8b949e; }
         .nav-btn.active { color: #f0f6fc; }
-        #nav-slider { 
-            position: absolute; 
-            height: 100%; 
-            background-color: #4f46e5; 
-            border-radius: 0.375rem; 
-            box-shadow: 0 0 8px rgba(79, 70, 229, 0.7);
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
-            z-index: 5; 
-        }
-
+        #nav-slider { position: absolute; height: 100%; background-color: #4f46e5; border-radius: 0.375rem; box-shadow: 0 0 8px rgba(79, 70, 229, 0.7); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 5; }
         ::-webkit-scrollbar { width: 8px; } 
         ::-webkit-scrollbar-track { background: #0d1117; } 
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
-        
-        #note-editor-container { 
-            position: relative; 
-        }
-        #note-highlighter, #note-input {
-            margin: 0;
-            padding: 0.75rem;
-            font-family: inherit;
-            font-size: inherit;
-            line-height: 1.6;
-            min-height: 10rem;
-            border-radius: 0.375rem;
-            border: 1px solid #30363d;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        #note-input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            color: transparent;
-            -webkit-text-fill-color: transparent; 
-            caret-color: #e2e8f0;
-            resize: none;
-        }
-
-        .date-highlight { 
-            background-color: rgba(79, 70, 229, 0.3);
-            border-bottom: 2px solid rgba(192, 38, 211, 0.5);
-            border-radius: 0.25rem; 
-        }
-        
-        .toggle-bg:after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            background-color: white;
-            width: 1.25rem;
-            height: 1.25rem;
-            border-radius: 9999px;
-            transition: transform 0.2s ease-in-out;
-        }
-        input:checked + .toggle-bg:after {
-            transform: translateX(100%);
-        }
-        input:checked + .toggle-bg {
-            background-color: #10b981;
-        }
-
-        @keyframes enlarge-shake {
-            0% { transform: scale(1) rotate(0); }
-            25% { transform: scale(1.05) rotate(-2deg); }
-            50% { transform: scale(1.05) rotate(2deg); }
-            75% { transform: scale(1.05) rotate(-2deg); }
-            100% { transform: scale(1) rotate(0); }
-        }
-        .shake-on-hover:hover {
-            animation: enlarge-shake 0.4s ease-in-out;
-        }
-        
-        @keyframes slide-in-down { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fade-out-shrink { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
-        @keyframes move-wave { from { transform: translateX(0); } to { transform: translateX(-200px); } }
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modal-content-in { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        #note-editor-container { position: relative; }
+        #note-highlighter, #note-input { margin: 0; padding: 0.75rem; font-family: inherit; font-size: inherit; line-height: 1.6; min-height: 10rem; border-radius: 0.375rem; border: 1px solid #30363d; white-space: pre-wrap; word-wrap: break-word; }
+        #note-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #e2e8f0; resize: none; }
+        .date-highlight { background-color: rgba(79, 70, 229, 0.3); border-bottom: 2px solid rgba(192, 38, 211, 0.5); border-radius: 0.25rem; }
+        .toggle-bg:after { content: ''; position: absolute; top: 2px; left: 2px; background-color: white; width: 1.25rem; height: 1.25rem; border-radius: 9999px; transition: transform 0.2s ease-in-out; }
+        input:checked + .toggle-bg:after { transform: translateX(100%); }
+        input:checked + .toggle-bg { background-color: #10b981; }
+        @keyframes enlarge-shake { 0% { transform: scale(1) rotate(0); } 25% { transform: scale(1.05) rotate(-2deg); } 50% { transform: scale(1.05) rotate(2deg); } 75% { transform: scale(1.05) rotate(-2deg); } 100% { transform: scale(1) rotate(0); } }
+        .shake-on-hover:hover { animation: enlarge-shake 0.4s ease-in-out; }
         .animate-slide-in { animation: slide-in-down 0.4s ease-in-out forwards; }
-        .animate-fade-out { animation: fade-out-shrink 0.3s ease-in-out forwards; }
-        .intro-modal-content { animation: modal-content-in 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
-        #wave-path { animation: move-wave 3s linear infinite; }
-        .modal-bg-animate { animation: fade-in 0.2s ease-out; }
     </style>
 </head>
 <body>
-
-    <div id="login-screen" class="flex flex-col items-center justify-center h-screen">
+    <div id="login-screen" class="hidden flex-col items-center justify-center h-screen">
         <div class="text-center p-8 border border-slate-700 rounded-xl neon-glow">
             <h1 class="text-6xl font-bold mb-4">Tavent</h1>
             <p class="text-slate-400 mb-8">Your personal finance dashboard.</p>
@@ -187,7 +60,6 @@
             </button>
         </div>
     </div>
-
     <div id="app-container" class="hidden">
         <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
             <header class="mb-4">
@@ -219,7 +91,7 @@
             </nav>
 
             <main id="main-content">
-                <!-- App content here... -->
+                <!-- App content rendered by JS -->
             </main>
         </div>
     </div>
@@ -228,27 +100,78 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- All functions and variables will be defined within this main listener ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Define all variables and functions first
+            
+            // --- 1. DEFINE ALL VARIABLES AND STATE ---
             let db, auth, userId, initCalled = false;
-            // ... (rest of state variables)
+            let viewingDate = new Date();
+            let historicalViewActive = false;
+            let spendingChart = null;
+            let calc = { expression: '0' };
+            let audioMuted = false;
+            let synths = {};
+            let masterGain;
 
-            const allDom = { /* ... DOM elements ... */ };
+            const allDom = { /* ... All your getElementById calls ... */ };
+            const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
 
-            // Define ALL helper and handler functions here...
+            // --- 2. DEFINE ALL HELPER AND HANDLER FUNCTIONS ---
+            
+            const createSynths = () => { /* ... */ };
+            const playSound = () => { /* ... */ };
+            // (All other helper functions)
+
+            const handleBudgetFormSubmit = async (e) => { /* ... */ };
+            const handleTransactionFormSubmit = async (e) => { /* ... */ };
+            // (All other event handler functions)
+            
+            const renderBudgetPage = async (options = {}) => { /* ... */ };
+            const renderNotesPage = () => { /* ... */ };
+            // (All other render functions)
+
+            // --- 3. DEFINE THE MAIN APP INITIALIZATION LOGIC ---
             const initApp = async () => {
                 if (initCalled) return;
                 initCalled = true;
-                // All event listeners and initial setup logic...
+
+                // Set up initial state and listeners that depend on the user
+                createSynths();
+                setMutedState(localStorage.getItem('taventMuted') === 'true');
+                setVolume(localStorage.getItem('taventVolume') || 0.75);
+
+                const periodSelect = document.getElementById('period-type');
+                periodSelect.innerHTML = `<option value="day">Today</option><option value="week">This Week</option><option value="month" selected>This Month</option><option value="year">This Year</option>`;
+
+                // Attach all event listeners
+                allDom.budgetForm.addEventListener('submit', handleBudgetFormSubmit);
+                allDom.transactionForm.addEventListener('submit', handleTransactionFormSubmit);
+                // ... (rest of the event listeners)
+                
+                document.body.addEventListener('click', () => { if (Tone.context.state !== 'running') { Tone.start(); } }, { once: true });
+                if (localStorage.getItem('taventIntroSeen') !== 'true') {
+                    showIntro();
+                }
+
+                await populateCategorySelects();
+                switchPage('budget-tracker-page');
             };
             
-            // --- FIREBASE INITIALIZATION & AUTH ---
-            const startApp = async () => {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            // --- 4. START THE FIREBASE CONNECTION ---
+            const main = () => {
+                const firebaseConfig = {
+                    // =========================================================================
+                    // PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
+                    // =========================================================================
+                };
+
+                if (!firebaseConfig.projectId) {
+                    alert("CRITICAL ERROR: Firebase configuration is missing from index.html. The app cannot start.");
+                    return;
+                }
 
                 try {
                     const app = initializeApp(firebaseConfig);
@@ -256,28 +179,24 @@
                     auth = getAuth(app);
                 } catch (e) {
                     console.error("Firebase initialization failed:", e);
-                    allDom.messageBox.textContent = "Could not connect to the database.";
-                    allDom.messageBox.classList.remove('hidden');
+                    alert("Could not connect to the database. Please check your Firebase configuration.");
                     return;
                 }
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // User is signed in.
                         userId = user.uid;
                         document.getElementById('app-container').classList.remove('hidden');
                         document.getElementById('login-screen').classList.add('hidden');
                         document.getElementById('user-photo').src = user.photoURL || 'https://placehold.co/32x32/161b22/c9d1d9?text=U';
                         document.getElementById('user-name').textContent = user.displayName || 'Anonymous User';
-                        if (!initCalled) {
-                           await initApp();
-                        }
+                        if (!initCalled) await initApp();
                     } else {
-                        // User is signed out.
                         userId = null;
                         initCalled = false;
                         document.getElementById('app-container').classList.add('hidden');
                         document.getElementById('login-screen').classList.remove('hidden');
+                        document.getElementById('login-screen').classList.add('flex');
                     }
                 });
 
@@ -287,7 +206,8 @@
                         await signInWithPopup(auth, provider);
                     } catch (error) {
                         console.error("Google Sign-In Error:", error);
-                        showMessage("Failed to sign in with Google.", "error");
+                        // showMessage is not defined here yet, use alert
+                        alert("Failed to sign in with Google. Check the console for more details.");
                     }
                 });
 
@@ -296,7 +216,7 @@
                 });
             };
 
-            startApp();
+            main(); // Execute the main function
         });
     </script>
 </body>
