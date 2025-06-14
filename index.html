@@ -52,10 +52,43 @@
         </div>
     </div>
     <div id="app-container" class="hidden">
-        <!-- Main App HTML is Injected Here -->
+        <!-- Main App HTML is Static and always present -->
+        <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <header class="mb-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-4xl font-bold">Tavent</h1>
+                        <div class="flex-grow h-6 overflow-hidden"><svg width="100%" height="100%" ><path id="wave-path" d="M -200 10 Q -150 0, -100 10 T 0 10 T 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 T 900 10 T 1000 10" stroke="#4f46e5" fill="none" stroke-width="3.5" stroke-linecap="round"></path></svg></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                         <div id="user-info" class="flex items-center gap-3">
+                            <img id="user-photo" class="w-8 h-8 rounded-full" src="">
+                            <span id="user-name" class="text-sm font-medium"></span>
+                        </div>
+                        <div class="group flex items-center space-x-2">
+                            <button id="mute-toggle" class="p-2 rounded-full hover:bg-slate-700"><svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg><svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-4-4m0 4l4-4"></path></svg></button>
+                            <input type="range" min="0" max="1" step="0.01" id="volume-slider" value="0.75" class="w-0 opacity-0 group-hover:w-[80px] group-hover:opacity-100 transition-all duration-300 ease-in-out">
+                        </div>
+                        <button id="logout-btn" class="secondary-btn text-sm px-3 py-1.5">Logout</button>
+                    </div>
+                </div>
+                <p class="text-slate-500 mt-2">v.1.1.5.release - Your ABM tool</p>
+            </header>
+            
+            <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
+                <div id="nav-slider"></div>
+                <button data-page="budget-tracker-page" class="nav-btn">Budget Tracker</button>
+                <button data-page="balance-sheet-page" class="nav-btn">Balance Sheet</button>
+                <button data-page="notes-page" class="nav-btn">Notes</button>
+            </nav>
+
+            <main id="main-content">
+                 <!-- Pages are here, visibility toggled by JS -->
+            </main>
+        </div>
     </div>
     <div id="modal-container">
-        <!-- Modals are Injected Here -->
+        <!-- Modals are here -->
     </div>
 
     <script type="module">
@@ -64,6 +97,7 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. DEFINE ALL VARIABLES ---
             let db, auth, userId, initCalled = false;
             let viewingDate = new Date();
             let historicalViewActive = false;
@@ -75,78 +109,94 @@
             const allDom = {};
             const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
 
-            // ... (All helper and handler functions will be defined inside initApp)
+            // --- 2. DEFINE ALL FUNCTIONS ---
+            const populateAllDom = () => { /* ... populate allDom object ... */ };
+            const createSynths = () => { /* ... */ };
+            const playSound = () => { /* ... */ };
+            // ... (All other helper and handler functions)
 
+            // --- 3. DEFINE MAIN APP INITIALIZATION LOGIC ---
             const initApp = async () => {
                 if (initCalled) return;
                 initCalled = true;
 
-                // FIXED: Inject the complete HTML structure for the app
-                document.getElementById('app-container').innerHTML = `
-                    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                         <header class="mb-4">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-4">
-                                    <h1 class="text-4xl font-bold">Tavent</h1>
-                                    <div class="flex-grow h-6 overflow-hidden"><svg width="100%" height="100%" ><path id="wave-path" d="M -200 10 Q -150 0, -100 10 T 0 10 T 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 T 900 10 T 1000 10" stroke="#4f46e5" fill="none" stroke-width="3.5" stroke-linecap="round"></path></svg></div>
-                                </div>
-                                <div class="flex items-center space-x-4">
-                                     <div id="user-info" class="flex items-center gap-3">
-                                        <img id="user-photo" class="w-8 h-8 rounded-full" src="">
-                                        <span id="user-name" class="text-sm font-medium"></span>
-                                    </div>
-                                    <div class="group flex items-center space-x-2">
-                                        <button id="mute-toggle" class="p-2 rounded-full hover:bg-slate-700"><svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg><svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-4-4m0 4l4-4"></path></svg></button>
-                                        <input type="range" min="0" max="1" step="0.01" id="volume-slider" value="0.75" class="w-0 opacity-0 group-hover:w-[80px] group-hover:opacity-100 transition-all duration-300 ease-in-out">
-                                    </div>
-                                    <button id="logout-btn" class="secondary-btn text-sm px-3 py-1.5">Logout</button>
-                                </div>
-                            </div>
-                            <p class="text-slate-500 mt-2">v.1.1.5.release - Your ABM tool</p>
-                        </header>
-                        <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
-                            <div id="nav-slider"></div>
-                            <button data-page="budget-tracker-page" class="nav-btn">Budget Tracker</button>
-                            <button data-page="balance-sheet-page" class="nav-btn">Balance Sheet</button>
-                            <button data-page="notes-page" class="nav-btn">Notes</button>
-                        </nav>
-                        <main id="main-content">
-                           <!-- Page HTML gets injected here by switchPage() -->
-                        </main>
-                    </div>`;
-                
-                // Inject the actual page content
+                // Inject the actual content into the containers
                 document.getElementById('main-content').innerHTML = `
-                    <div id="budget-tracker-page" class="page-content"> ... </div>
-                    <div id="balance-sheet-page" class="page-content hidden"> ... </div>
-                    <div id="notes-page" class="page-content hidden"> ... </div>
-                `;
+                    <div id="budget-tracker-page" class="page-content">...</div>
+                    <div id="balance-sheet-page" class="page-content hidden">...</div>
+                    <div id="notes-page" class="page-content hidden">...</div>`;
+                document.getElementById('modal-container').innerHTML = `
+                    <div id="intro-modal" ...>...</div>
+                    <div id="edit-modal" ...>...</div>
+                    <div id="confirm-modal" ...>...</div>
+                    <div id="category-modal" ...>...</div>`;
                 
-                // Now that the main app structure is in the DOM, populate allDom and attach listeners
-                // ... (Populate allDom and attach listeners here)
+                // Now that HTML is in the DOM, populate allDom object
+                populateAllDom();
+                
+                // Set up initial state and listeners
+                createSynths();
+                setMutedState(localStorage.getItem('taventMuted') === 'true');
+                setVolume(localStorage.getItem('taventVolume') || 0.75);
+
+                const periodSelect = document.getElementById('period-type');
+                periodSelect.innerHTML = `<option value="day">Today</option><option value="week">This Week</option><option value="month" selected>This Month</option><option value="year">This Year</option>`;
+
+                // Attach all event listeners
+                allDom.logoutBtn.addEventListener('click', () => signOut(auth));
+                // ... (rest of the event listeners)
+                
+                if (!localStorage.getItem('taventIntroSeen')) {
+                    showIntro();
+                }
+                
+                await populateCategorySelects();
+                switchPage('budget-tracker-page');
             };
-            
+
+            // --- 4. START THE APPLICATION ---
             const startApp = () => {
-                const firebaseConfig = { /* ... your config object ... */ };
-                
-                // ... (Firebase initialization as before) ...
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
+                    authDomain: "tavent-app.firebaseapp.com",
+                    projectId: "tavent-app",
+                    storageBucket: "tavent-app.appspot.com",
+                    messagingSenderId: "78590457523",
+                    appId: "1:78590457523:web:5b1f23311463de1a44e2c6",
+                    measurementId: "G-9V7TTS47GC"
+                };
+
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                } catch (e) {
+                    console.error("Firebase initialization failed:", e);
+                    alert("Could not connect to the database.");
+                    return;
+                }
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        if (!initCalled) await initApp();
+                        await initApp();
                         document.getElementById('app-container').classList.remove('hidden');
                         document.getElementById('login-screen').classList.add('hidden');
-                        document.getElementById('user-photo').src = user.photoURL || `https://placehold.co/32x32/161b22/c9d1d9?text=${user.email[0].toUpperCase()}`;
-                        document.getElementById('user-name').textContent = user.displayName || 'Anonymous User';
                     } else {
-                        // ... handle logout ...
+                        userId = null;
+                        initCalled = false;
+                        document.getElementById('app-container').classList.add('hidden');
+                        document.getElementById('login-screen').classList.remove('hidden');
+                        document.getElementById('login-screen').classList.add('flex');
                     }
                 });
 
-                document.getElementById('login-btn').addEventListener('click', () => { /* ... */ });
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    const provider = new GoogleAuthProvider();
+                    signInWithPopup(auth, provider).catch(error => console.error("Google Sign-In Error:", error));
+                });
             };
-
+            
             startApp();
         });
     </script>
