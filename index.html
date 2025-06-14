@@ -163,9 +163,17 @@
             // --- 4. START THE FIREBASE CONNECTION ---
             const main = () => {
                 const firebaseConfig = {
-                    // =========================================================================
-                    // PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
-                    // =========================================================================
+                   // --- 4. START THE APPLICATION ---
+const main = async () => {
+    const firebaseConfig = {
+      apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
+      authDomain: "tavent-app.firebaseapp.com",
+      projectId: "tavent-app",
+      storageBucket: "tavent-app.firebasestorage.app",
+      messagingSenderId: "78590457523",
+      appId: "1:78590457523:web:5b1f23311463de1a44e2c6",
+      measurementId: "G-9V7TTS47GC"
+    };
                 };
 
                 if (!firebaseConfig.projectId) {
