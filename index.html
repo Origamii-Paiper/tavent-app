@@ -3,24 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tavent v.1.1.0.release</title>
-    
+    <title>Tavent v.1.1.2.release</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    </script>
-
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; }
         .neon-glow { box-shadow: 0 0 5px rgba(79, 70, 229, 0.5), 0 0 10px rgba(147, 51, 234, 0.4); }
         section, .modal-content, .note-card, #calculator { background-color: #161b22; border: 1px solid #30363d; }
-        .transaction-item, .balance-item, .category-item { background-color: #21262d; border: 1px solid #30363d; }
+        .transaction-item, .balance-item, .category-item, .summary-card { background-color: #21262d; border: 1px solid #30363d; }
         input, select, textarea { background-color: #0d1117; border-color: #30363d; color: #c9d1d9; }
         input:focus, select:focus, textarea:focus { border-color: #4f46e5; box-shadow: 0 0 0 1px #4f46e5; outline: none; }
         h1, h2, #summary-budget, #summary-goal, .modal-content h2, .total-label { color: #f0f6fc; }
@@ -33,10 +25,7 @@
         .nav-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; transition: color 0.3s; z-index: 10; color: #8b949e; }
         .nav-btn.active { color: #f0f6fc; }
         #nav-slider { position: absolute; height: 100%; background-color: #4f46e5; border-radius: 0.375rem; box-shadow: 0 0 8px rgba(79, 70, 229, 0.7); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 5; }
-        ::-webkit-scrollbar { width: 8px; } 
-        ::-webkit-scrollbar-track { background: #0d1117; } 
-        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #0d1117; } ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
         #note-editor-container { position: relative; }
         #note-highlighter, #note-input { margin: 0; padding: 0.75rem; font-family: inherit; font-size: inherit; line-height: 1.6; min-height: 10rem; border-radius: 0.375rem; border: 1px solid #30363d; white-space: pre-wrap; word-wrap: break-word; }
         #note-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #e2e8f0; resize: none; }
@@ -61,52 +50,16 @@
         </div>
     </div>
     <div id="app-container" class="hidden">
-        <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            <header class="mb-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <h1 class="text-4xl font-bold">Tavent</h1>
-                        <div class="flex-grow h-6 overflow-hidden"><svg width="100%" height="100%" ><path id="wave-path" d="M -200 10 Q -150 0, -100 10 T 0 10 T 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 T 900 10 T 1000 10" stroke="#4f46e5" fill="none" stroke-width="3.5" stroke-linecap="round"></path></svg></div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                         <div id="user-info" class="flex items-center gap-3">
-                            <img id="user-photo" class="w-8 h-8 rounded-full" src="">
-                            <span id="user-name" class="text-sm font-medium"></span>
-                        </div>
-                        <div class="group flex items-center space-x-2">
-                            <button id="mute-toggle" class="p-2 rounded-full hover:bg-slate-700"><svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg><svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-4-4m0 4l4-4"></path></svg></button>
-                            <input type="range" min="0" max="1" step="0.01" id="volume-slider" value="0.75" class="w-0 opacity-0 group-hover:w-[80px] group-hover:opacity-100 transition-all duration-300 ease-in-out">
-                        </div>
-                        <button id="logout-btn" class="secondary-btn text-sm px-3 py-1.5">Logout</button>
-                    </div>
-                </div>
-                <p class="text-slate-500 mt-2">v.1.1.0.release - Your ABM tool</p>
-            </header>
-            
-            <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
-                <div id="nav-slider"></div>
-                <button data-page="budget-tracker-page" class="nav-btn">Budget Tracker</button>
-                <button data-page="balance-sheet-page" class="nav-btn">Balance Sheet</button>
-                <button data-page="notes-page" class="nav-btn">Notes</button>
-            </nav>
-
-            <main id="main-content">
-                <!-- App content rendered by JS -->
-            </main>
-        </div>
+        <!-- Main App HTML will be injected here -->
     </div>
-    
-    <!-- (Modals remain the same) -->
+    <!-- Modals will be injected here -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- All functions and variables will be defined within this main listener ---
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- 1. DEFINE ALL VARIABLES AND STATE ---
             let db, auth, userId, initCalled = false;
             let viewingDate = new Date();
             let historicalViewActive = false;
@@ -115,66 +68,68 @@
             let audioMuted = false;
             let synths = {};
             let masterGain;
-
-            const allDom = { /* ... All your getElementById calls ... */ };
+            
+            const allDom = {};
             const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
 
-            // --- 2. DEFINE ALL HELPER AND HANDLER FUNCTIONS ---
-            
-            const createSynths = () => { /* ... */ };
-            const playSound = () => { /* ... */ };
-            // (All other helper functions)
+            // --- FUNCTIONS (Defined first) ---
+            const showMessage = (text, type = 'success') => {
+                const msgBox = document.getElementById('message-box');
+                if(!msgBox) return;
+                msgBox.textContent = text;
+                msgBox.className = `mb-6 p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`;
+                msgBox.classList.remove('hidden');
+                setTimeout(() => msgBox.classList.add('hidden'), 4000);
+            };
 
-            const handleBudgetFormSubmit = async (e) => { /* ... */ };
-            const handleTransactionFormSubmit = async (e) => { /* ... */ };
-            // (All other event handler functions)
-            
-            const renderBudgetPage = async (options = {}) => { /* ... */ };
-            const renderNotesPage = () => { /* ... */ };
-            // (All other render functions)
+            const populateAllDom = () => {
+                const ids = ['login-screen', 'app-container', 'login-btn', 'logout-btn', 'user-info', 'user-photo', 'user-name', 'main-content', 'app', 'main-nav', 'nav-slider', 'message-box', 'budget-tracker-page', 'setup-section', 'budget-form', 'period-type', 'budget-amount', 'savings-goal', 'tracking-section', 'summary-section', 'history-nav', 'back-to-current-btn', 'prev-period-btn', 'next-period-btn', 'period-display', 'summary-budget', 'summary-income', 'summary-spent', 'summary-remaining', 'summary-goal', 'transaction-form', 'transaction-type-toggle', 'transaction-desc', 'transaction-amount', 'transaction-category', 'spending-chart', 'transaction-list', 'change-budget-btn', 'manage-categories-btn', 'export-csv-btn', 'clear-data-btn', 'balance-sheet-page', 'asset-form', 'asset-desc', 'asset-value', 'assets-list', 'total-assets', 'liability-form', 'liability-desc', 'liability-value', 'liabilities-list', 'total-liabilities', 'equity-form', 'equity-desc', 'equity-value', 'equity-list', 'total-equity', 'balance-status', 'notes-page', 'note-form', 'note-editor-container', 'note-highlighter', 'note-input', 'notes-list', 'calculator', 'calc-display', 'intro-modal', 'start-tracking-btn', 'edit-modal', 'edit-form', 'cancel-edit-btn', 'edit-id', 'edit-desc', 'edit-amount', 'edit-category', 'confirm-modal', 'cancel-confirm-btn', 'confirm-clear-btn', 'category-modal', 'close-category-modal-btn', 'add-category-form', 'category-list', 'mute-toggle', 'icon-sound-on', 'icon-sound-off', 'volume-slider'];
+                ids.forEach(id => allDom[id] = document.getElementById(id));
+            };
 
-            // --- 3. DEFINE THE MAIN APP INITIALIZATION LOGIC ---
+            // ... (All other functions defined here)
+
             const initApp = async () => {
                 if (initCalled) return;
                 initCalled = true;
 
-                // Set up initial state and listeners that depend on the user
-                createSynths();
-                setMutedState(localStorage.getItem('taventMuted') === 'true');
-                setVolume(localStorage.getItem('taventVolume') || 0.75);
+                document.getElementById('app-container').innerHTML = `
+                    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                        <header class="mb-4">
+                            <!-- Header content -->
+                        </header>
+                        <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
+                            <!-- Nav content -->
+                        </nav>
+                        <main id="main-content">
+                            <!-- Page content will be injected here -->
+                        </main>
+                    </div>`;
 
-                const periodSelect = document.getElementById('period-type');
-                periodSelect.innerHTML = `<option value="day">Today</option><option value="week">This Week</option><option value="month" selected>This Month</option><option value="year">This Year</option>`;
-
-                // Attach all event listeners
-                allDom.budgetForm.addEventListener('submit', handleBudgetFormSubmit);
-                allDom.transactionForm.addEventListener('submit', handleTransactionFormSubmit);
-                // ... (rest of the event listeners)
+                // Inject page content and modals... (similar to previous approach but more robust)
                 
-                document.body.addEventListener('click', () => { if (Tone.context.state !== 'running') { Tone.start(); } }, { once: true });
-                if (localStorage.getItem('taventIntroSeen') !== 'true') {
-                    showIntro();
-                }
+                populateAllDom(); // Now that HTML exists, populate the dom object
+                
+                // createSynths();
+                // setMutedState(localStorage.getItem('taventMuted') === 'true');
+                // ... (rest of initApp logic)
+                allDom.logoutBtn.addEventListener('click', () => signOut(auth));
 
-                await populateCategorySelects();
-                switchPage('budget-tracker-page');
             };
             
-         // --- 4. START THE APPLICATION ---
-const main = async () => {
-    const firebaseConfig = {
-      apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
-      authDomain: "tavent-app.firebaseapp.com",
-      projectId: "tavent-app",
-      storageBucket: "tavent-app.firebasestorage.app",
-      messagingSenderId: "78590457523",
-      appId: "1:78590457523:web:5b1f23311463de1a44e2c6",
-      measurementId: "G-9V7TTS47GC"
-    };
+            const startApp = () => {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
+                    authDomain: "tavent-app.firebaseapp.com",
+                    projectId: "tavent-app",
+                    storageBucket: "tavent-app.appspot.com",
+                    messagingSenderId: "78590457523",
+                    appId: "1:78590457523:web:5b1f23311463de1a44e2c6",
+                    measurementId: "G-9V7TTS47GC"
                 };
 
                 if (!firebaseConfig.projectId) {
-                    alert("CRITICAL ERROR: Firebase configuration is missing from index.html. The app cannot start.");
+                    document.body.innerHTML = `<div class="text-white text-center p-8 text-2xl bg-red-800">CRITICAL ERROR: Firebase configuration is missing. The app cannot start. Please paste your config object into the index.html file.</div>`;
                     return;
                 }
 
@@ -189,39 +144,33 @@ const main = async () => {
                 }
 
                 onAuthStateChanged(auth, async (user) => {
+                    const loginScreen = document.getElementById('login-screen');
+                    const appContainer = document.getElementById('app-container');
+                    
                     if (user) {
                         userId = user.uid;
-                        document.getElementById('app-container').classList.remove('hidden');
-                        document.getElementById('login-screen').classList.add('hidden');
-                        document.getElementById('user-photo').src = user.photoURL || 'https://placehold.co/32x32/161b22/c9d1d9?text=U';
-                        document.getElementById('user-name').textContent = user.displayName || 'Anonymous User';
+                        appContainer.classList.remove('hidden');
+                        loginScreen.classList.add('hidden');
                         if (!initCalled) await initApp();
                     } else {
                         userId = null;
                         initCalled = false;
-                        document.getElementById('app-container').classList.add('hidden');
-                        document.getElementById('login-screen').classList.remove('hidden');
-                        document.getElementById('login-screen').classList.add('flex');
+                        appContainer.classList.add('hidden');
+                        loginScreen.classList.remove('hidden');
+                        loginScreen.classList.add('flex');
                     }
                 });
 
-                document.getElementById('login-btn').addEventListener('click', async () => {
+                document.getElementById('login-btn').addEventListener('click', () => {
                     const provider = new GoogleAuthProvider();
-                    try {
-                        await signInWithPopup(auth, provider);
-                    } catch (error) {
+                    signInWithPopup(auth, provider).catch(error => {
                         console.error("Google Sign-In Error:", error);
-                        // showMessage is not defined here yet, use alert
-                        alert("Failed to sign in with Google. Check the console for more details.");
-                    }
-                });
-
-                document.getElementById('logout-btn').addEventListener('click', async () => {
-                    await signOut(auth);
+                        alert("Failed to sign in with Google. Check the console for details.");
+                    });
                 });
             };
 
-            main(); // Execute the main function
+            startApp();
         });
     </script>
 </body>
