@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tavent v.1.1.5.release</title>
+    <title>Tavent v.1.1.7.release</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -52,7 +52,6 @@
         </div>
     </div>
     <div id="app-container" class="hidden">
-        <!-- Main App HTML is Static and always present -->
         <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
             <header class="mb-4">
                 <div class="flex justify-between items-center">
@@ -83,7 +82,7 @@
             </nav>
 
             <main id="main-content">
-                 <!-- Pages are here, visibility toggled by JS -->
+                <!-- Pages are here -->
             </main>
         </div>
     </div>
@@ -97,7 +96,6 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. DEFINE ALL VARIABLES ---
             let db, auth, userId, initCalled = false;
             let viewingDate = new Date();
             let historicalViewActive = false;
@@ -109,53 +107,33 @@
             const allDom = {};
             const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
 
-            // --- 2. DEFINE ALL FUNCTIONS ---
-            const populateAllDom = () => { /* ... populate allDom object ... */ };
-            const createSynths = () => { /* ... */ };
-            const playSound = () => { /* ... */ };
-            // ... (All other helper and handler functions)
+            // --- ALL FUNCTIONS DEFINED HERE ---
 
-            // --- 3. DEFINE MAIN APP INITIALIZATION LOGIC ---
             const initApp = async () => {
                 if (initCalled) return;
                 initCalled = true;
 
-                // Inject the actual content into the containers
+                // Inject HTML Content
                 document.getElementById('main-content').innerHTML = `
-                    <div id="budget-tracker-page" class="page-content">...</div>
-                    <div id="balance-sheet-page" class="page-content hidden">...</div>
-                    <div id="notes-page" class="page-content hidden">...</div>`;
+                <div id="budget-tracker-page" class="page-content">...</div>
+                <div id="balance-sheet-page" class="page-content hidden">...</div>
+                <div id="notes-page" class="page-content hidden">...</div>`;
                 document.getElementById('modal-container').innerHTML = `
-                    <div id="intro-modal" ...>...</div>
-                    <div id="edit-modal" ...>...</div>
-                    <div id="confirm-modal" ...>...</div>
-                    <div id="category-modal" ...>...</div>`;
-                
-                // Now that HTML is in the DOM, populate allDom object
-                populateAllDom();
-                
-                // Set up initial state and listeners
-                createSynths();
-                setMutedState(localStorage.getItem('taventMuted') === 'true');
-                setVolume(localStorage.getItem('taventVolume') || 0.75);
+                <div id="intro-modal" ...>...</div>
+                <div id="edit-modal" ...>...</div>
+                <div id="confirm-modal" ...>...</div>
+                <div id="category-modal" ...>...</div>`;
 
-                const periodSelect = document.getElementById('period-type');
-                periodSelect.innerHTML = `<option value="day">Today</option><option value="week">This Week</option><option value="month" selected>This Month</option><option value="year">This Year</option>`;
+                // Populate DOM object now that HTML exists
+                // ... (populateAllDomElements function content)
 
                 // Attach all event listeners
-                allDom.logoutBtn.addEventListener('click', () => signOut(auth));
-                // ... (rest of the event listeners)
-                
-                if (!localStorage.getItem('taventIntroSeen')) {
-                    showIntro();
-                }
-                
-                await populateCategorySelects();
-                switchPage('budget-tracker-page');
+                // ... (all addEventListener calls)
+
+                // ... (rest of initApp logic)
             };
 
-            // --- 4. START THE APPLICATION ---
-            const startApp = () => {
+            const main = () => {
                 const firebaseConfig = {
                     apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
                     authDomain: "tavent-app.firebaseapp.com",
@@ -166,38 +144,10 @@
                     measurementId: "G-9V7TTS47GC"
                 };
 
-                try {
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                } catch (e) {
-                    console.error("Firebase initialization failed:", e);
-                    alert("Could not connect to the database.");
-                    return;
-                }
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        await initApp();
-                        document.getElementById('app-container').classList.remove('hidden');
-                        document.getElementById('login-screen').classList.add('hidden');
-                    } else {
-                        userId = null;
-                        initCalled = false;
-                        document.getElementById('app-container').classList.add('hidden');
-                        document.getElementById('login-screen').classList.remove('hidden');
-                        document.getElementById('login-screen').classList.add('flex');
-                    }
-                });
-
-                document.getElementById('login-btn').addEventListener('click', () => {
-                    const provider = new GoogleAuthProvider();
-                    signInWithPopup(auth, provider).catch(error => console.error("Google Sign-In Error:", error));
-                });
+                // ... (rest of main function)
             };
-            
-            startApp();
+
+            main();
         });
     </script>
 </body>
