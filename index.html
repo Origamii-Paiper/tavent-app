@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tavent v.1.1.7.release</title>
+    <title>Tavent v.1.2.0.release</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -82,12 +82,15 @@
             </nav>
 
             <main id="main-content">
-                <!-- Pages are here -->
+                 <!-- The app's pages are all here, with their visibility toggled by JS -->
+                <div id="budget-tracker-page" class="page-content">...</div>
+                <div id="balance-sheet-page" class="page-content hidden">...</div>
+                <div id="notes-page" class="page-content hidden">...</div>
             </main>
         </div>
     </div>
     <div id="modal-container">
-        <!-- Modals are here -->
+        <!-- Modals are all here -->
     </div>
 
     <script type="module">
@@ -96,44 +99,32 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
+            // State variables
             let db, auth, userId, initCalled = false;
-            let viewingDate = new Date();
-            let historicalViewActive = false;
-            let spendingChart = null;
-            let calc = { expression: '0' };
-            let audioMuted = false;
-            let synths = {};
-            let masterGain;
+            // ... (rest of state variables)
             const allDom = {};
             const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
 
-            // --- ALL FUNCTIONS DEFINED HERE ---
+            // Function to populate allDom object
+            function populateAllDomElements() { /* ... */ }
+
+            // --- ALL OTHER HELPER AND HANDLER FUNCTIONS DEFINED HERE ---
 
             const initApp = async () => {
                 if (initCalled) return;
                 initCalled = true;
-
-                // Inject HTML Content
-                document.getElementById('main-content').innerHTML = `
-                <div id="budget-tracker-page" class="page-content">...</div>
-                <div id="balance-sheet-page" class="page-content hidden">...</div>
-                <div id="notes-page" class="page-content hidden">...</div>`;
-                document.getElementById('modal-container').innerHTML = `
-                <div id="intro-modal" ...>...</div>
-                <div id="edit-modal" ...>...</div>
-                <div id="confirm-modal" ...>...</div>
-                <div id="category-modal" ...>...</div>`;
-
-                // Populate DOM object now that HTML exists
-                // ... (populateAllDomElements function content)
+                
+                populateAllDomElements(); // Find all elements now that they are in the DOM
 
                 // Attach all event listeners
-                // ... (all addEventListener calls)
-
+                allDom.logoutBtn.addEventListener('click', () => signOut(auth));
+                // ... (rest of the event listeners)
+                
                 // ... (rest of initApp logic)
             };
 
             const main = () => {
+                // Your Firebase config object goes here
                 const firebaseConfig = {
                     apiKey: "AIzaSyBYyFjdMF_VATRu1cJLxhKme8Q-4FMdF0A",
                     authDomain: "tavent-app.firebaseapp.com",
@@ -144,9 +135,38 @@
                     measurementId: "G-9V7TTS47GC"
                 };
 
-                // ... (rest of main function)
-            };
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                } catch (e) {
+                    // ... (error handling)
+                }
 
+                onAuthStateChanged(auth, async (user) => {
+                    const loginScreen = document.getElementById('login-screen');
+                    const appContainer = document.getElementById('app-container');
+                    
+                    if (user) {
+                        userId = user.uid;
+                        await initApp();
+                        appContainer.classList.remove('hidden');
+                        loginScreen.classList.add('hidden');
+                    } else {
+                        userId = null;
+                        initCalled = false;
+                        appContainer.classList.add('hidden');
+                        loginScreen.classList.remove('hidden');
+                        loginScreen.classList.add('flex');
+                    }
+                });
+
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    const provider = new GoogleAuthProvider();
+                    signInWithPopup(auth, provider).catch(error => console.error(error));
+                });
+            };
+            
             main();
         });
     </script>
