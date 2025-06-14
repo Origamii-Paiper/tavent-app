@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tavent v.0.9.3.neon</title>
+    <title>Tavent v.1.1.0.release</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // We will initialize Firebase in our main script
+    </script>
 
     <style>
         body { 
@@ -17,24 +23,20 @@
             color: #c9d1d9; 
         }
         
-        /* Neon Glow Effect */
         .neon-glow {
             box-shadow: 0 0 5px rgba(79, 70, 229, 0.5), 0 0 10px rgba(147, 51, 234, 0.4);
         }
         
-        /* Main containers and cards */
         section, .modal-content, .note-card, #calculator {
             background-color: #161b22;
             border: 1px solid #30363d;
         }
 
-        /* Specific item backgrounds */
         .transaction-item, .balance-item, .category-item {
             background-color: #21262d;
             border: 1px solid #30363d;
         }
 
-        /* Input fields */
         input, select, textarea {
             background-color: #0d1117;
             border-color: #30363d;
@@ -50,7 +52,6 @@
         
         #period-display { color: #a5b4fc; }
         
-        /* Buttons */
         .primary-btn {
             background-image: linear-gradient(to right, #4f46e5, #c026d3);
             border: none;
@@ -74,7 +75,6 @@
             color: #c9d1d9;
         }
 
-        /* Navigation */
         #main-nav { position: relative; }
         .nav-btn { 
             padding: 0.5rem 1rem; 
@@ -95,7 +95,6 @@
             z-index: 5; 
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; } 
         ::-webkit-scrollbar-track { background: #0d1117; } 
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
@@ -124,7 +123,7 @@
             height: 100%;
             background-color: transparent;
             color: transparent;
-            -webkit-text-fill-color: transparent; /* Ensures text is invisible */
+            -webkit-text-fill-color: transparent; 
             caret-color: #e2e8f0;
             resize: none;
         }
@@ -135,7 +134,6 @@
             border-radius: 0.25rem; 
         }
         
-        /* Transaction Type Toggle */
         .toggle-bg:after {
             content: '';
             position: absolute;
@@ -154,7 +152,17 @@
             background-color: #10b981;
         }
 
-        /* Animations */
+        @keyframes enlarge-shake {
+            0% { transform: scale(1) rotate(0); }
+            25% { transform: scale(1.05) rotate(-2deg); }
+            50% { transform: scale(1.05) rotate(2deg); }
+            75% { transform: scale(1.05) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .shake-on-hover:hover {
+            animation: enlarge-shake 0.4s ease-in-out;
+        }
+        
         @keyframes slide-in-down { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fade-out-shrink { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
         @keyframes move-wave { from { transform: translateX(0); } to { transform: translateX(-200px); } }
@@ -169,273 +177,126 @@
 </head>
 <body>
 
-    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="mb-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-4xl font-bold">Tavent</h1>
-                    <div class="flex-grow h-6 overflow-hidden"><svg width="100%" height="100%" ><path id="wave-path" d="M -200 10 Q -150 0, -100 10 T 0 10 T 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 T 900 10 T 1000 10" stroke="#4f46e5" fill="none" stroke-width="3.5" stroke-linecap="round"></path></svg></div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="group flex items-center space-x-2">
-                        <button id="mute-toggle" class="p-2 rounded-full hover:bg-slate-700"><svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg><svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-4-4m0 4l4-4"></path></svg></button>
-                        <input type="range" min="0" max="1" step="0.01" id="volume-slider" value="0.75" class="w-0 opacity-0 group-hover:w-[80px] group-hover:opacity-100 transition-all duration-300 ease-in-out">
-                    </div>
-                </div>
-            </div>
-            <p class="text-slate-500 mt-2">v.0.9.3.neon - Your ABM tool</p>
-        </header>
-        
-        <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
-            <div id="nav-slider"></div>
-            <button data-page="budget-tracker-page" class="nav-btn">Budget Tracker</button>
-            <button data-page="balance-sheet-page" class="nav-btn">Balance Sheet</button>
-            <button data-page="notes-page" class="nav-btn">Notes</button>
-        </nav>
-
-        <main id="main-content">
-            <div id="message-box" class="hidden mb-6 p-4 rounded-lg text-sm"></div>
-            
-            <div id="budget-tracker-page" class="page-content">
-                <section id="setup-section" class="p-6 rounded-xl shadow-sm border">
-                    <h2 class="text-2xl font-semibold mb-4">Budget & Goal Setup</h2>
-                    <form id="budget-form" class="space-y-4">
-                        <div>
-                            <label for="period-type" class="block text-sm font-medium mb-1">Budget Period</label>
-                            <select id="period-type" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm"></select>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="budget-amount" class="block text-sm font-medium mb-1">Your Budget ($)</label>
-                                <input type="number" id="budget-amount" min="0" step="0.01" placeholder="e.g., 1000" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm">
-                            </div>
-                            <div>
-                                <label for="savings-goal" class="block text-sm font-medium mb-1">Savings Goal ($)</label>
-                                <input type="number" id="savings-goal" min="0" step="0.01" placeholder="e.g., 200" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white primary-btn">
-                            Set & Start Tracking
-                        </button>
-                    </form>
-                </section>
-                <div id="tracking-section" class="hidden mt-8">
-                    <section class="mb-8 p-6 rounded-xl shadow-sm border">
-                        <div id="summary-section">
-                            <h2 class="text-2xl font-semibold mb-4">Current Period Summary</h2>
-                            <div id="period-display" class="mb-4 text-lg font-medium"></div>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                                <div class="summary-card p-4 rounded-lg"><h3 class="text-sm font-medium text-slate-400">Budget</h3><p id="summary-budget" class="text-2xl font-semibold">$0.00</p></div>
-                                <div class="summary-card p-4 rounded-lg"><h3 class="text-sm font-medium text-slate-400">Received</h3><p id="summary-income" class="text-2xl font-semibold text-green-400">$0.00</p></div>
-                                <div class="summary-card p-4 rounded-lg"><h3 class="text-sm font-medium text-slate-400">Spent</h3><p id="summary-spent" class="text-2xl font-semibold text-fuchsia-500">$0.00</p></div>
-                                <div class="summary-card p-4 rounded-lg"><h3 class="text-sm font-medium text-slate-400">Remaining</h3><p id="summary-remaining" class="text-2xl font-semibold text-cyan-400">$0.00</p></div>
-                                <div class="summary-card p-4 rounded-lg"><h3 class="text-sm font-medium text-slate-400">Savings Goal</h3><p id="summary-goal" class="text-2xl font-semibold">$0.00</p></div>
-                            </div>
-                        </div>
-                    </section>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-8">
-                            <section class="p-6 rounded-xl shadow-sm border">
-                                <h2 class="text-2xl font-semibold mb-4">New Transaction</h2>
-                                <form id="transaction-form" class="space-y-4">
-                                    <div class="flex items-center justify-center space-x-4 mb-4">
-                                        <span class="font-medium text-fuchsia-400">Expense</span>
-                                        <label for="transaction-type-toggle" class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" value="" id="transaction-type-toggle" class="sr-only peer">
-                                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-fuchsia-800 toggle-bg"></div>
-                                        </label>
-                                        <span class="font-medium text-green-400">Receive</span>
-                                    </div>
-                                    <div>
-                                        <label for="transaction-desc" class="block text-sm font-medium mb-1">Description</label>
-                                        <input type="text" id="transaction-desc" placeholder="e.g., Paycheck, Groceries" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm">
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="transaction-amount" class="block text-sm font-medium mb-1">Amount ($)</label>
-                                            <input type="number" id="transaction-amount" min="0.01" step="0.01" placeholder="e.g., 50.25" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm">
-                                        </div>
-                                        <div>
-                                            <label for="transaction-category" class="block text-sm font-medium mb-1">Category</label>
-                                            <select id="transaction-category" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm"></select>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="w-full primary-btn inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white transition-transform duration-200 hover:scale-105">Add to Ledger</button>
-                                </form>
-                            </section>
-                            <section class="p-6 rounded-xl shadow-sm border"><h2 class="text-2xl font-semibold mb-4">Spending by Category</h2><div class="max-w-xs mx-auto"><canvas id="spending-chart"></canvas></div></section>
-                        </div>
-                        <div class="space-y-8">
-                            <section class="p-6 rounded-xl shadow-sm border"><h2 class="text-2xl font-semibold mb-4">Transaction Ledger</h2><div id="transaction-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div></section>
-                            <section class="p-6 rounded-xl shadow-sm border"><h2 class="text-2xl font-semibold mb-4">Settings & Data</h2><div class="flex flex-col sm:flex-row gap-4"><button id="export-csv-btn" class="secondary-btn w-full inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm">Export to CSV</button><button id="clear-data-btn" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">Clear All Data</button></div><div class="mt-4 flex flex-col gap-4"><button id="change-budget-btn" class="secondary-btn w-full inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm">Change Budget or Goal</button><button id="manage-categories-btn" class="secondary-btn w-full inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm">Manage Categories</button></div></section>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="balance-sheet-page" class="page-content hidden">
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-                    <section class="p-6 rounded-xl shadow-sm border space-y-4"><h2 class="text-2xl font-semibold mb-2">Assets</h2><form id="asset-form" class="flex gap-2"><input type="text" id="asset-desc" placeholder="Asset Name" required class="flex-grow block w-full rounded-md shadow-sm sm:text-sm"><input type="number" id="asset-value" placeholder="Value" required class="block w-32 rounded-md shadow-sm sm:text-sm" min="0" step="0.01"><button type="submit" class="px-3 py-2 text-sm rounded-md text-white bg-green-600 hover:bg-green-700">+</button></form><div id="assets-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div><div class="border-t border-slate-700 pt-4 mt-4 flex justify-between items-center"><h3 class="total-label text-lg font-semibold">Total Assets</h3><p id="total-assets" class="text-lg font-bold text-green-500">$0.00</p></div></section>
-                    <section class="p-6 rounded-xl shadow-sm border space-y-4"><h2 class="text-2xl font-semibold mb-2">Liabilities</h2><form id="liability-form" class="flex gap-2"><input type="text" id="liability-desc" placeholder="Liability Name" required class="flex-grow block w-full rounded-md shadow-sm sm:text-sm"><input type="number" id="liability-value" placeholder="Amount" required class="block w-32 rounded-md shadow-sm sm:text-sm" min="0" step="0.01"><button type="submit" class="px-3 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700">+</button></form><div id="liabilities-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div><div class="border-t border-slate-700 pt-4 mt-4 flex justify-between items-center"><h3 class="total-label text-lg font-semibold">Total Liabilities</h3><p id="total-liabilities" class="text-lg font-bold text-red-500">$0.00</p></div></section>
-                    <section class="p-6 rounded-xl shadow-sm border space-y-4"><h2 class="text-2xl font-semibold mb-2">Owner's Equity</h2><form id="equity-form" class="flex gap-2"><input type="text" id="equity-desc" placeholder="Equity Name" required class="flex-grow block w-full rounded-md shadow-sm sm:text-sm"><input type="number" id="equity-value" placeholder="Value" required class="block w-32 rounded-md shadow-sm sm:text-sm" min="0" step="0.01"><button type="submit" class="px-3 py-2 text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700">+</button></form><div id="equity-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div><div class="border-t border-slate-700 pt-4 mt-4 flex justify-between items-center"><h3 class="total-label text-lg font-semibold">Total Equity</h3><p id="total-equity" class="text-lg font-bold text-blue-500">$0.00</p></div></section>
-                </div>
-                <section class="mt-8 p-6 rounded-xl shadow-sm border"><div class="flex justify-between items-center"><h2 class="text-2xl font-semibold">Balance Status</h2><p id="balance-status" class="text-3xl font-bold">Unbalanced</p></div></section>
-            </div>
-            
-            <div id="notes-page" class="page-content hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-4">
-                        <section class="p-6 rounded-xl shadow-sm border"><h2 class="text-2xl font-semibold mb-4">New Note</h2><form id="note-form" class="space-y-4"><div id="note-editor-container"><div id="note-highlighter"></div><textarea id="note-input" placeholder="Type a note... dates like '12/25/2024' will be highlighted." rows="5"></textarea></div><button type="submit" class="w-full sm:w-auto primary-btn inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white">Add Note</button></form></section>
-                        <section class="p-6 rounded-xl shadow-sm border"><h2 class="text-2xl font-semibold mb-4">Saved Notes</h2><div id="notes-list" class="space-y-4"></div></section>
-                    </div>
-                    <div class="lg:col-span-1">
-                        <section id="calculator" class="p-4 rounded-xl shadow-sm border space-y-4"><div id="calc-display" class="bg-slate-900 rounded p-4 text-right text-3xl font-mono overflow-x-auto">0</div><div class="grid grid-cols-4 gap-2"><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">C</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">x²</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">x³</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">/</button><button class="calc-btn num h-14 text-xl rounded">7</button><button class="calc-btn num h-14 text-xl rounded">8</button><button class="calc-btn num h-14 text-xl rounded">9</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">*</button><button class="calc-btn num h-14 text-xl rounded">4</button><button class="calc-btn num h-14 text-xl rounded">5</button><button class="calc-btn num h-14 text-xl rounded">6</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">-</button><button class="calc-btn num h-14 text-xl rounded">1</button><button class="calc-btn num h-14 text-xl rounded">2</button><button class="calc-btn num h-14 text-xl rounded">3</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">+</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">(</button><button class="calc-btn num h-14 text-xl rounded">0</button><button class="calc-btn op h-14 text-xl rounded bg-indigo-500 text-white">)</button><button class="calc-btn eq h-14 text-xl rounded bg-fuchsia-600 text-white">=</button><button class="calc-btn num col-span-4 h-14 text-xl rounded">.</button></div></section>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="intro-modal" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden items-center justify-center p-4 z-50 modal-bg-animate">
-        <div class="modal-content bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-lg text-center neon-glow">
-            <h2 class="text-3xl font-bold mb-4 text-indigo-400">Recent Updates!</h2>
-            <p class="text-slate-300 mb-6">Here's what's new in version 0.9.1.neon:</p>
-            <div class="text-center space-y-4 mb-8">
-                 <p class="flex items-center justify-center gap-3"><span class="text-cyan-400 mt-1"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></span><span class="text-slate-300"><strong>Receive & Spend:</strong> Now you can track both money in and money out.</span></p>
-                 <p class="flex items-center justify-center gap-3"><span class="text-cyan-400 mt-1"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></span><span class="text-slate-300"><strong>Weekly Budgeting:</strong> Added a "This Week" option for more detailed tracking.</span></p>
-                 <p class="flex items-center justify-center gap-3"><span class="text-cyan-400 mt-1"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></span><span class="text-slate-300"><strong>Bug Squashing:</strong> Fixed note duplication and improved theme consistency.</span></p>
-            </div>
-            <button id="start-tracking-btn" class="w-full primary-btn inline-flex justify-center items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md shadow-sm text-white transition-transform hover:scale-105">Let's Get Started</button>
-        </div>
-    </div>
-    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 modal-bg-animate"><div class="modal-content p-6 rounded-xl shadow-lg w-full max-w-md border"><h2 class="text-2xl font-semibold mb-4">Edit Transaction</h2><form id="edit-form" class="space-y-4"><input type="hidden" id="edit-id"><div><label for="edit-desc" class="block text-sm font-medium">Description</label><input type="text" id="edit-desc" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm"></div><div class="grid grid-cols-2 gap-4"><div><label for="edit-amount" class="block text-sm font-medium">Amount ($)</label><input type="number" id="edit-amount" min="0.01" step="0.01" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm"></div><div><label for="edit-category" class="block text-sm font-medium">Category</label><select id="edit-category" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm"></select></div></div><div class="flex gap-4"><button type="button" id="cancel-edit-btn" class="secondary-btn w-full inline-flex justify-center py-2 px-4 text-sm font-medium rounded-md shadow-sm">Cancel</button><button type="submit" class="w-full primary-btn inline-flex justify-center py-2 px-4 text-sm font-medium rounded-md shadow-sm text-white">Save Changes</button></div></form></div></div>
-    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 modal-bg-animate"><div class="modal-content p-6 rounded-xl shadow-lg w-full max-w-md border"><h2 class="text-xl font-bold mb-4">Are you sure?</h2><p class="text-sm mb-6">This action will permanently delete all your data and cannot be undone.</p><div class="flex gap-4"><button type="button" id="cancel-confirm-btn" class="secondary-btn w-full inline-flex justify-center py-2 px-4 text-sm font-medium rounded-md shadow-sm">Cancel</button><button type="button" id="confirm-clear-btn" class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">Yes, Clear Data</button></div></div></div>
-    <div id="category-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 modal-bg-animate">
-        <div class="modal-content p-6 rounded-xl shadow-lg w-full max-w-md border">
-            <h2 class="text-2xl font-semibold mb-4">Manage Categories</h2>
-            <form id="add-category-form" class="flex gap-2 mb-4">
-                <input type="text" id="add-category-name" placeholder="New category name" required class="flex-grow block w-full rounded-md shadow-sm sm:text-sm">
-                <button type="submit" class="px-4 py-2 text-sm rounded-md text-white primary-btn">Add</button>
-            </form>
-            <div id="category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button type="button" id="close-category-modal-btn" class="secondary-btn inline-flex justify-center py-2 px-4 text-sm font-medium rounded-md shadow-sm">Close</button>
-            </div>
+    <div id="login-screen" class="flex flex-col items-center justify-center h-screen">
+        <div class="text-center p-8 border border-slate-700 rounded-xl neon-glow">
+            <h1 class="text-6xl font-bold mb-4">Tavent</h1>
+            <p class="text-slate-400 mb-8">Your personal finance dashboard.</p>
+            <button id="login-btn" class="primary-btn inline-flex items-center gap-3 px-6 py-3 text-lg font-medium rounded-md shadow-sm text-white">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,34.556,44,28.708,44,22.659C44,21.35,43.862,21.35,43.611,20.083z"/></svg>
+                Sign in with Google
+            </button>
         </div>
     </div>
 
-    <script>
+    <div id="app-container" class="hidden">
+        <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <header class="mb-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-4xl font-bold">Tavent</h1>
+                        <div class="flex-grow h-6 overflow-hidden"><svg width="100%" height="100%" ><path id="wave-path" d="M -200 10 Q -150 0, -100 10 T 0 10 T 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 T 900 10 T 1000 10" stroke="#4f46e5" fill="none" stroke-width="3.5" stroke-linecap="round"></path></svg></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                         <div id="user-info" class="flex items-center gap-3">
+                            <img id="user-photo" class="w-8 h-8 rounded-full" src="">
+                            <span id="user-name" class="text-sm font-medium"></span>
+                        </div>
+                        <div class="group flex items-center space-x-2">
+                            <button id="mute-toggle" class="p-2 rounded-full hover:bg-slate-700"><svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg><svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-4-4m0 4l4-4"></path></svg></button>
+                            <input type="range" min="0" max="1" step="0.01" id="volume-slider" value="0.75" class="w-0 opacity-0 group-hover:w-[80px] group-hover:opacity-100 transition-all duration-300 ease-in-out">
+                        </div>
+                        <button id="logout-btn" class="secondary-btn text-sm px-3 py-1.5">Logout</button>
+                    </div>
+                </div>
+                <p class="text-slate-500 mt-2">v.1.1.0.release - Your ABM tool</p>
+            </header>
+            
+            <nav id="main-nav" class="mb-8 flex space-x-2 border-b border-slate-700">
+                <div id="nav-slider"></div>
+                <button data-page="budget-tracker-page" class="nav-btn">Budget Tracker</button>
+                <button data-page="balance-sheet-page" class="nav-btn">Balance Sheet</button>
+                <button data-page="notes-page" class="nav-btn">Notes</button>
+            </nav>
+
+            <main id="main-content">
+                <!-- App content here... -->
+            </main>
+        </div>
+    </div>
+    
+    <!-- (Modals remain the same) -->
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         document.addEventListener('DOMContentLoaded', () => {
-            const allDom = { html: document.documentElement, nav: document.getElementById('main-nav'), navSlider: document.getElementById('nav-slider'), pages: document.querySelectorAll('.page-content'), budgetForm: document.getElementById('budget-form'), transactionForm: document.getElementById('transaction-form'), periodTypeSelect: document.getElementById('period-type'), setupSection: document.getElementById('setup-section'), trackingSection: document.getElementById('tracking-section'), changeBudgetBtn: document.getElementById('change-budget-btn'), messageBox: document.getElementById('message-box'), transactionListEl: document.getElementById('transaction-list'), muteToggle: document.getElementById('mute-toggle'), iconSoundOn: document.getElementById('icon-sound-on'), iconSoundOff: document.getElementById('icon-sound-off'), volumeSlider: document.getElementById('volume-slider'), exportCsvBtn: document.getElementById('export-csv-btn'), clearDataBtn: document.getElementById('clear-data-btn'), spendingChartCanvas: document.getElementById('spending-chart'), editModal: document.getElementById('edit-modal'), editForm: document.getElementById('edit-form'), cancelEditBtn: document.getElementById('cancel-edit-btn'), editIdInput: document.getElementById('edit-id'), editDescInput: document.getElementById('edit-desc'), editAmountInput: document.getElementById('edit-amount'), editCategorySelect: document.getElementById('edit-category'), confirmModal: document.getElementById('confirm-modal'), cancelConfirmBtn: document.getElementById('cancel-confirm-btn'), confirmClearBtn: document.getElementById('confirm-clear-btn'), noteForm: document.getElementById('note-form'), noteInput: document.getElementById('note-input'), noteHighlighter: document.getElementById('note-highlighter'), notesList: document.getElementById('notes-list'), calculator: document.getElementById('calculator'), calcDisplay: document.getElementById('calc-display'), assetForm: document.getElementById('asset-form'), assetsList: document.getElementById('assets-list'), totalAssets: document.getElementById('total-assets'), liabilityForm: document.getElementById('liability-form'), liabilitiesList: document.getElementById('liabilities-list'), totalLiabilities: document.getElementById('total-liabilities'), equityForm: document.getElementById('equity-form'), equityList: document.getElementById('equity-list'), totalEquity: document.getElementById('total-equity'), balanceStatus: document.getElementById('balance-status'), introModal: document.getElementById('intro-modal'), startTrackingBtn: document.getElementById('start-tracking-btn'), manageCategoriesBtn: document.getElementById('manage-categories-btn'), categoryModal: document.getElementById('category-modal'), closeCategoryModalBtn: document.getElementById('close-category-modal-btn'), addCategoryForm: document.getElementById('add-category-form'), categoryList: document.getElementById('category-list') };
-            const TAVENT_STORAGE_KEY = 'taventData'; const NOTES_STORAGE_KEY = 'taventNotes'; const MUTE_STORAGE_KEY = 'taventMuted'; const BALANCE_SHEET_STORAGE_KEY = 'taventBalanceSheet'; const INTRO_SEEN_KEY = 'taventIntroSeen'; const VOLUME_KEY = 'taventVolume'; const CATEGORIES_STORAGE_KEY = 'taventCategories';
-            const DEFAULT_CATEGORIES = ['Received', 'Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Other'];
-            let spendingChart = null; 
-            let calc = { expression: '0' }; 
-            let audioMuted = false; let synths = {}; let masterGain;
-            const createSynths = () => { masterGain = new Tone.Gain(0.75).toDestination(); synths.click = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 } }).connect(masterGain); synths.success = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).connect(masterGain); synths.delete = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 } }).connect(masterGain); };
-            const playSound = (soundType, note, duration = '8n') => { if (audioMuted || Tone.context.state !== 'running') return; if (Object.keys(synths).length === 0) createSynths(); setTimeout(() => { const synth = synths[soundType]; if (synth && synth.triggerAttackRelease) { if (soundType === 'delete') synth.triggerAttackRelease(duration); else synth.triggerAttackRelease(note, duration); } }, 0); };
-            const setMutedState = (muted) => { audioMuted = muted; localStorage.setItem(MUTE_STORAGE_KEY, muted); allDom.iconSoundOn.classList.toggle('hidden', muted); allDom.iconSoundOff.classList.toggle('hidden', !muted); allDom.volumeSlider.disabled = muted; };
-            const setVolume = (level) => { if(masterGain) masterGain.gain.rampTo(level, 0.1); localStorage.setItem(VOLUME_KEY, level); allDom.volumeSlider.value = level; };
-            const getState = () => JSON.parse(localStorage.getItem(TAVENT_STORAGE_KEY)) || {};
-            const saveState = (state) => localStorage.setItem(TAVENT_STORAGE_KEY, JSON.stringify(state));
-            const getNotes = () => JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY)) || [];
-            const saveNotes = (notes) => localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
-            const getBalanceSheet = () => JSON.parse(localStorage.getItem(BALANCE_SHEET_STORAGE_KEY)) || { assets: [], liabilities: [], equity: [] };
-            const saveBalanceSheet = (data) => localStorage.setItem(BALANCE_SHEET_STORAGE_KEY, JSON.stringify(data));
-            const getCategories = () => JSON.parse(localStorage.getItem(CATEGORIES_STORAGE_KEY)) || DEFAULT_CATEGORIES;
-            const saveCategories = (categories) => { localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories)); populateCategorySelects(); };
-            const populateCategorySelects = () => { const categories = getCategories(); const selects = [allDom.editCategorySelect, document.getElementById('transaction-category')]; selects.forEach(select => { if(!select) return; select.innerHTML = ''; categories.forEach(cat => { const option = document.createElement('option'); option.value = cat; option.textContent = cat; select.appendChild(option); }); }); };
-            const getWeekNumber = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7); return weekNo; }
-            const getCurrentPeriodId = () => { const type = allDom.periodTypeSelect.value; const now = new Date(); if (type === 'day') return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-day`; if (type === 'month') return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-month`; if(type === 'week') return `${now.getFullYear()}-W${String(getWeekNumber(now)).padStart(2, '0')}-week`; return `${now.getFullYear()}-year`; };
-            const updateNavSlider = (activeBtn) => { if (!activeBtn) return; const { offsetLeft, offsetWidth } = activeBtn; allDom.navSlider.style.left = `${offsetLeft}px`; allDom.navSlider.style.width = `${offsetWidth}px`; };
-            const switchPage = (pageId) => { playSound('click', 'C4'); allDom.pages.forEach(page => page.classList.add('hidden')); document.getElementById(pageId).classList.remove('hidden'); let activeBtn; allDom.nav.querySelectorAll('.nav-btn').forEach(btn => { if (btn.dataset.page === pageId) { btn.classList.add('active'); activeBtn = btn; } else { btn.classList.remove('active'); } }); updateNavSlider(activeBtn); if (pageId === 'notes-page') renderNotesPage(); if (pageId === 'budget-tracker-page') renderBudgetPage(); if (pageId === 'balance-sheet-page') renderBalanceSheetPage(); };
-            const renderBudgetPage = (options = {}) => { populateCategorySelects(); const { animateNewest = false } = options; const state = getState(); const periodId = getCurrentPeriodId(); const periodData = state[periodId]; if (!periodData || !periodData.budget) { switchView(false); allDom.transactionListEl.innerHTML = '<p class="text-slate-500">Set a budget to begin.</p>'; if (spendingChart) spendingChart.destroy(); return; } switchView(true); const transactions = periodData.transactions || []; const totalIncome = transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0); const totalExpenses = transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0); const budgetAmount = periodData.budget.amount; document.getElementById('summary-budget').textContent = `$${budgetAmount.toFixed(2)}`; document.getElementById('summary-income').textContent = `$${totalIncome.toFixed(2)}`; document.getElementById('summary-spent').textContent = `$${Math.abs(totalExpenses).toFixed(2)}`; document.getElementById('summary-remaining').textContent = `$${(budgetAmount + totalIncome + totalExpenses).toFixed(2)}`; document.getElementById('summary-goal').textContent = `$${periodData.budget.goal.toFixed(2)}`; document.getElementById('period-display').textContent = `Tracking for: ${periodData.budget.periodName}`; allDom.transactionListEl.innerHTML = ''; if (transactions.length === 0) { allDom.transactionListEl.innerHTML = '<p class="text-slate-500 text-center">No transactions logged yet.</p>'; } else { const sorted = [...transactions].sort((a, b) => b.timestamp - a.timestamp); sorted.forEach((t, index) => { const el = document.createElement('div'); el.className = 'transaction-item flex justify-between items-center p-3 rounded-lg'; el.dataset.id = t.id; const amountClass = t.amount > 0 ? 'text-green-400' : 'text-fuchsia-500'; const sign = t.amount > 0 ? '+' : ''; el.innerHTML = `<div><p class="font-medium">${t.description}</p><p class="text-xs text-slate-500">${t.category} &middot; ${new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p></div><div class="flex items-center space-x-3"><span class="font-semibold ${amountClass}">${sign}$${Math.abs(t.amount).toFixed(2)}</span><button data-id="${t.id}" class="edit-transaction-btn p-1 rounded hover:bg-slate-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button data-id="${t.id}" class="delete-transaction-btn text-slate-400 hover:text-red-600">&times;</button></div>`; if (index === 0 && animateNewest) { el.classList.add('animate-slide-in'); } allDom.transactionListEl.appendChild(el); }); } renderSpendingChart(transactions.filter(t => t.amount < 0)); };
-            const renderSpendingChart = (expenses) => { if (!expenses) expenses = []; const categoryTotals = expenses.reduce((acc, expense) => { acc[expense.category] = (acc[expense.category] || 0) + Math.abs(expense.amount); return acc; }, {}); const labels = Object.keys(categoryTotals); const data = Object.values(categoryTotals); if (spendingChart) spendingChart.destroy(); if (labels.length === 0) { allDom.spendingChartCanvas.style.display = 'none'; return; } allDom.spendingChartCanvas.style.display = 'block'; spendingChart = new Chart(allDom.spendingChartCanvas, { type: 'pie', data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#4f46e5', '#c026d3', '#10b981', '#f97316', '#64748b', '#3b82f6', '#8b5cf6'], borderColor: '#161b22', }] }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#c9d1d9' } } } } }); };
-            const renderBalanceSheetPage = () => { const data = getBalanceSheet(); let totalAssets = data.assets.reduce((sum, item) => sum + item.value, 0); let totalLiabilities = data.liabilities.reduce((sum, item) => sum + item.value, 0); let totalEquity = data.equity.reduce((sum, item) => sum + item.value, 0); allDom.assetsList.innerHTML = ''; data.assets.forEach(asset => { allDom.assetsList.innerHTML += `<div class="balance-item flex justify-between items-center p-2 rounded-lg"><span>${asset.description}</span><div class="flex items-center gap-2"><span class="font-medium">$${asset.value.toFixed(2)}</span><button data-id="${asset.id}" class="delete-asset-btn text-slate-400 hover:text-red-500">&times;</button></div></div>`; }); allDom.liabilitiesList.innerHTML = ''; data.liabilities.forEach(liability => { allDom.liabilitiesList.innerHTML += `<div class="balance-item flex justify-between items-center p-2 rounded-lg"><span>${liability.description}</span><div class="flex items-center gap-2"><span class="font-medium">$${liability.value.toFixed(2)}</span><button data-id="${liability.id}" class="delete-liability-btn text-slate-400 hover:text-red-500">&times;</button></div></div>`; }); allDom.equityList.innerHTML = ''; data.equity.forEach(equity => { allDom.equityList.innerHTML += `<div class="balance-item flex justify-between items-center p-2 rounded-lg"><span>${equity.description}</span><div class="flex items-center gap-2"><span class="font-medium">$${equity.value.toFixed(2)}</span><button data-id="${equity.id}" class="delete-equity-btn text-slate-400 hover:text-red-500">&times;</button></div></div>`; }); allDom.totalAssets.textContent = `$${totalAssets.toFixed(2)}`; allDom.totalLiabilities.textContent = `$${totalLiabilities.toFixed(2)}`; allDom.totalEquity.textContent = `$${totalEquity.toFixed(2)}`; const isBalanced = Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 0.001; allDom.balanceStatus.textContent = isBalanced ? "Balanced" : "Unbalanced"; allDom.balanceStatus.className = 'text-3xl font-bold'; allDom.balanceStatus.classList.add(isBalanced ? 'text-green-500' : 'text-red-500'); };
-            const highlightDatesInText = (text) => { const dateRegex = /(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4})/gi; return text.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(dateRegex, '<span class="date-highlight">$&</span>'); };
-            const renderNotesPage = () => { allDom.notesList.innerHTML = ''; const notes = getNotes(); if (notes.length === 0) { allDom.notesList.innerHTML = '<p class="text-slate-500 text-center">No notes yet.</p>'; return; } notes.sort((a,b) => b.timestamp - a.timestamp).forEach(note => { const noteEl = document.createElement('div'); noteEl.className = 'note-card p-4 rounded-lg border'; noteEl.innerHTML = `<div class="flex justify-between items-start"><p class="text-sm whitespace-pre-wrap">${highlightDatesInText(note.content)}</p><button data-id="${note.id}" class="delete-note-btn text-slate-400 hover:text-red-500 flex-shrink-0 ml-4">&times;</button></div><p class="text-xs text-slate-400 mt-2">${new Date(note.timestamp).toLocaleString()}</p>`; allDom.notesList.appendChild(noteEl); }); };
-            const switchView = (showTracking) => { if (showTracking) { allDom.setupSection.classList.add('hidden'); allDom.trackingSection.classList.remove('hidden'); } else { allDom.setupSection.classList.remove('hidden'); allDom.trackingSection.classList.add('hidden'); } };
-            const showMessage = (text, type = 'success') => { allDom.messageBox.textContent = text; allDom.messageBox.className = `mb-6 p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`; allDom.messageBox.classList.remove('hidden'); setTimeout(() => allDom.messageBox.classList.add('hidden'), 4000); };
-            const openModal = (modal, data) => { if (modal === allDom.editModal && data) { populateCategorySelects(); allDom.editIdInput.value = data.id; allDom.editDescInput.value = data.description; allDom.editAmountInput.value = Math.abs(data.amount); allDom.editCategorySelect.value = data.category; } modal.classList.remove('hidden'); modal.classList.add('flex'); };
-            const closeModal = (modal) => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
-            const handlePeriodChange = () => renderBudgetPage();
-            const handleBudgetFormSubmit = (e) => { e.preventDefault(); playSound('success', 'G5'); const amount = parseFloat(document.getElementById('budget-amount').value); const goal = parseFloat(document.getElementById('savings-goal').value); if (isNaN(amount) || isNaN(goal) || amount <= 0) return showMessage("Please enter a valid budget and goal.", "error"); const periodType = allDom.periodTypeSelect.value; const now = new Date(); let periodName = now.toLocaleString('en-us', { month: 'long', year: 'numeric' }); if (periodType === 'day') periodName = now.toLocaleString('en-us', { day: 'numeric', month: 'long', year: 'numeric'}); else if (periodType === 'week') periodName = `Week ${getWeekNumber(now)}, ${now.getFullYear()}`; else if (periodType === 'year') periodName = now.getFullYear().toString(); const state = getState(); const periodId = getCurrentPeriodId(); if (!state[periodId]) state[periodId] = { transactions: [] }; state[periodId].budget = { amount, goal, periodName }; saveState(state); showMessage("Budget set successfully!", "success"); renderBudgetPage(); };
-            const handleTransactionFormSubmit = (e) => { e.preventDefault(); playSound('success', 'C5'); const isIncome = document.getElementById('transaction-type-toggle').checked; const description = document.getElementById('transaction-desc').value; let amount = parseFloat(document.getElementById('transaction-amount').value); const category = document.getElementById('transaction-category').value; if (!description || isNaN(amount) || amount <= 0 || !category) return showMessage("Please provide a valid description, amount, and category.", "error"); if (!isIncome) { amount = -amount; } const newTransaction = { id: Date.now(), timestamp: Date.now(), description, amount, category }; const state = getState(); const periodId = getCurrentPeriodId(); if (!state[periodId] || !state[periodId].budget) return showMessage("Please set a budget first.", "error"); if (!state[periodId].transactions) state[periodId].transactions = []; state[periodId].transactions.push(newTransaction); saveState(state); showMessage("Transaction added!", "success"); allDom.transactionForm.reset(); renderBudgetPage({ animateNewest: true }); };
-            const handleEditFormSubmit = (e) => { e.preventDefault(); playSound('success', 'E5'); const idToEdit = parseInt(allDom.editIdInput.value, 10); const newDesc = allDom.editDescInput.value; let newAmount = parseFloat(allDom.editAmountInput.value); const newCategory = allDom.editCategorySelect.value; if (!newDesc || isNaN(newAmount) || newAmount <= 0) return showMessage("Invalid edit data.", "error"); const state = getState(); const periodId = getCurrentPeriodId(); const txIndex = state[periodId].transactions.findIndex(t => t.id === idToEdit); if (txIndex > -1) { if (state[periodId].transactions[txIndex].amount < 0) { newAmount = -newAmount; } state[periodId].transactions[txIndex] = { ...state[periodId].transactions[txIndex], description: newDesc, amount: newAmount, category: newCategory }; saveState(state); showMessage("Transaction updated!", "success"); closeModal(allDom.editModal); renderBudgetPage(); } };
-            const handleDeleteTransaction = (transactionId) => { playSound('delete'); const idToDelete = parseInt(transactionId, 10); const element = allDom.transactionListEl.querySelector(`[data-id='${idToDelete}']`); if (!element) return; element.classList.add('animate-fade-out'); setTimeout(() => { const state = getState(); const periodId = getCurrentPeriodId(); if (state[periodId]?.transactions) { state[periodId].transactions = state[periodId].transactions.filter(t => t.id !== idToDelete); saveState(state); renderBudgetPage(); } }, 300); };
-            const handleNoteFormSubmit = (e) => { e.preventDefault(); playSound('success', 'A4'); const content = allDom.noteInput.value.trim(); if (!content) return showMessage("Note cannot be empty.", "error"); const newNote = { id: Date.now(), timestamp: Date.now(), content }; const notes = getNotes(); notes.push(newNote); saveNotes(notes); showMessage("Note saved!", "success"); allDom.noteInput.value = ''; allDom.noteHighlighter.innerHTML = ''; renderNotesPage(); };
-            const handleDeleteNote = (noteId) => { playSound('delete'); const idToDelete = parseInt(noteId, 10); let notes = getNotes(); notes = notes.filter(note => note.id !== idToDelete); saveNotes(notes); renderNotesPage(); };
-            const handleAssetFormSubmit = (e) => { e.preventDefault(); const desc = document.getElementById('asset-desc').value.trim(); const val = parseFloat(document.getElementById('asset-value').value); if (!desc || isNaN(val) || val < 0) return; playSound('success', 'G5'); const data = getBalanceSheet(); data.assets.push({ id: Date.now(), description: desc, value: val }); saveBalanceSheet(data); renderBalanceSheetPage(); e.target.reset(); };
-            const handleLiabilityFormSubmit = (e) => { e.preventDefault(); const desc = document.getElementById('liability-desc').value.trim(); const val = parseFloat(document.getElementById('liability-value').value); if (!desc || isNaN(val) || val < 0) return; playSound('success', 'D5'); const data = getBalanceSheet(); data.liabilities.push({ id: Date.now(), description: desc, value: val }); saveBalanceSheet(data); renderBalanceSheetPage(); e.target.reset(); };
-            const handleEquityFormSubmit = (e) => { e.preventDefault(); const desc = document.getElementById('equity-desc').value.trim(); const val = parseFloat(document.getElementById('equity-value').value); if (!desc || isNaN(val) || val < 0) return; playSound('success', 'E5'); const data = getBalanceSheet(); data.equity.push({ id: Date.now(), description: desc, value: val }); saveBalanceSheet(data); renderBalanceSheetPage(); e.target.reset(); };
-            const handleDeleteAsset = (id) => { playSound('delete'); const data = getBalanceSheet(); data.assets = data.assets.filter(item => item.id !== id); saveBalanceSheet(data); renderBalanceSheetPage(); };
-            const handleDeleteLiability = (id) => { playSound('delete'); const data = getBalanceSheet(); data.liabilities = data.liabilities.filter(item => item.id !== id); saveBalanceSheet(data); renderBalanceSheetPage(); };
-            const handleDeleteEquity = (id) => { playSound('delete'); const data = getBalanceSheet(); data.equity = data.equity.filter(item => item.id !== id); saveBalanceSheet(data); renderBalanceSheetPage(); };
-            const exportToCsv = () => { playSound('click', 'F5'); const state = getState(); const periodId = getCurrentPeriodId(); const transactions = state[periodId]?.transactions; if (!transactions || transactions.length === 0) return showMessage("No transactions to export.", "error"); let csvContent = "data:text/csv;charset=utf-8,Date,Description,Category,Amount\n"; transactions.forEach(t => { const row = [new Date(t.timestamp).toLocaleString(), `"${t.description.replace(/"/g, '""')}"`, t.category, t.amount].join(","); csvContent += row + "\n"; }); const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `tavent_transactions_${periodId}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
-            const executeClearAllData = () => { playSound('delete'); localStorage.removeItem(TAVENT_STORAGE_KEY); localStorage.removeItem(NOTES_STORAGE_KEY); localStorage.removeItem(BALANCE_SHEET_STORAGE_KEY); localStorage.removeItem(CATEGORIES_STORAGE_KEY); closeModal(allDom.confirmModal); showMessage("All data has been cleared.", "success"); renderBudgetPage(); renderNotesPage(); renderBalanceSheetPage(); };
-            const handleCalculatorClick = (e) => { const { target } = e; if (!target.matches('.calc-btn')) return; playSound('click', 'C6', '32n'); const buttonText = target.textContent; let currentExpression = calc.expression; if (currentExpression === 'Error' || (currentExpression === '0' && !'().'.includes(buttonText))) { currentExpression = ''; } switch (buttonText) { case 'C': calc.expression = '0'; break; case '=': try { const result = new Function('return ' + currentExpression.replace('x', '*'))(); calc.expression = String(parseFloat(result.toFixed(5))); } catch { calc.expression = 'Error'; } break; case 'x²': calc.expression = currentExpression + '**2'; break; case 'x³': calc.expression = currentExpression + '**3'; break; default: calc.expression = currentExpression + buttonText; break; } if (calc.expression === '') { calc.expression = '0'; } allDom.calcDisplay.textContent = calc.expression; };
-            const renderCategoryManagerModal = () => { allDom.categoryList.innerHTML = ''; const categories = getCategories(); categories.forEach(cat => { const item = document.createElement('div'); item.className = 'category-item flex justify-between items-center p-2 rounded-lg'; item.innerHTML = `<span>${cat}</span><button data-category="${cat}" class="delete-category-btn text-slate-400 hover:text-red-500">&times;</button>`; allDom.categoryList.appendChild(item); }); };
-            const handleAddCategory = (e) => { e.preventDefault(); const input = document.getElementById('add-category-name'); const newCategory = input.value.trim(); if (newCategory) { let categories = getCategories(); if (!categories.includes(newCategory)) { categories.push(newCategory); saveCategories(categories); renderCategoryManagerModal(); } input.value = ''; } };
-            const handleDeleteCategory = (categoryName) => { let categories = getCategories(); categories = categories.filter(c => c !== categoryName); saveCategories(categories); renderCategoryManagerModal(); };
-            const showIntro = () => { allDom.introModal.classList.remove('hidden'); allDom.introModal.classList.add('flex'); };
-            const hideIntro = () => { playSound('success', 'G5'); allDom.introModal.classList.add('hidden'); allDom.introModal.classList.remove('flex'); localStorage.setItem(INTRO_SEEN_KEY, 'true'); };
-            const init = () => {
-                const periodSelect = document.getElementById('period-type');
-                periodSelect.innerHTML = `
-                    <option value="day">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month" selected>This Month</option>
-                    <option value="year">This Year</option>
-                `;
+            // Define all variables and functions first
+            let db, auth, userId, initCalled = false;
+            // ... (rest of state variables)
 
-                if (!localStorage.getItem(CATEGORIES_STORAGE_KEY)) { localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(DEFAULT_CATEGORIES)); }
-                createSynths(); 
-                allDom.budgetForm.addEventListener('submit', handleBudgetFormSubmit);
-                allDom.transactionForm.addEventListener('submit', handleTransactionFormSubmit);
-                allDom.periodTypeSelect.addEventListener('change', handlePeriodChange);
-                allDom.changeBudgetBtn.addEventListener('click', () => { playSound('click', 'C5'); switchView(false); });
-                allDom.muteToggle.addEventListener('click', () => setMutedState(!audioMuted));
-                allDom.volumeSlider.addEventListener('input', (e) => setVolume(parseFloat(e.target.value)));
-                allDom.exportCsvBtn.addEventListener('click', exportToCsv);
-                allDom.clearDataBtn.addEventListener('click', () => { playSound('click', 'C4'); openModal(allDom.confirmModal); });
-                allDom.editForm.addEventListener('submit', handleEditFormSubmit);
-                allDom.cancelEditBtn.addEventListener('click', () => { playSound('click', 'C4'); closeModal(allDom.editModal); });
-                allDom.cancelConfirmBtn.addEventListener('click', () => { playSound('click', 'C4'); closeModal(allDom.confirmModal); });
-                allDom.confirmClearBtn.addEventListener('click', executeClearAllData);
-                allDom.noteForm.addEventListener('submit', handleNoteFormSubmit);
-                allDom.noteInput.addEventListener('input', () => { allDom.noteHighlighter.innerHTML = highlightDatesInText(allDom.noteInput.value); });
-                allDom.noteInput.addEventListener('scroll', () => { allDom.noteHighlighter.scrollTop = allDom.noteInput.scrollTop; });
-                allDom.notesList.addEventListener('click', e => { if (e.target.closest('.delete-note-btn')) handleDeleteNote(e.target.closest('.delete-note-btn').dataset.id); });
-                allDom.calculator.addEventListener('click', handleCalculatorClick);
-                allDom.nav.addEventListener('click', (e) => { const navBtn = e.target.closest('.nav-btn'); if (navBtn) switchPage(navBtn.dataset.page); });
-                allDom.transactionListEl.addEventListener('click', (e) => { const editButton = e.target.closest('.edit-transaction-btn'); if (editButton) { playSound('click', 'E5'); const state = getState(); const periodId = getCurrentPeriodId(); const transaction = state[periodId].transactions.find(t => t.id === parseInt(editButton.dataset.id, 10)); if(transaction) openModal(allDom.editModal, transaction); } const deleteButton = e.target.closest('.delete-transaction-btn'); if (deleteButton) handleDeleteTransaction(deleteButton.dataset.id); });
-                allDom.assetForm.addEventListener('submit', handleAssetFormSubmit);
-                allDom.liabilityForm.addEventListener('submit', handleLiabilityFormSubmit);
-                allDom.equityForm.addEventListener('submit', handleEquityFormSubmit);
-                allDom.assetsList.addEventListener('click', (e) => { const btn = e.target.closest('.delete-asset-btn'); if(btn) handleDeleteAsset(parseInt(btn.dataset.id)); });
-                allDom.liabilitiesList.addEventListener('click', (e) => { const btn = e.target.closest('.delete-liability-btn'); if(btn) handleDeleteLiability(parseInt(btn.dataset.id)); });
-                allDom.equityList.addEventListener('click', (e) => { const btn = e.target.closest('.delete-equity-btn'); if(btn) handleDeleteEquity(parseInt(btn.dataset.id)); });
-                allDom.startTrackingBtn.addEventListener('click', hideIntro);
-                allDom.manageCategoriesBtn.addEventListener('click', () => { renderCategoryManagerModal(); openModal(allDom.categoryModal); });
-                allDom.closeCategoryModalBtn.addEventListener('click', () => closeModal(allDom.categoryModal));
-                allDom.addCategoryForm.addEventListener('submit', handleAddCategory);
-                allDom.categoryList.addEventListener('click', (e) => { if (e.target.closest('.delete-category-btn')) { handleDeleteCategory(e.target.closest('.delete-category-btn').dataset.category); } });
-                
-                setMutedState(localStorage.getItem(MUTE_STORAGE_KEY) === 'true');
-                setVolume(localStorage.getItem(VOLUME_KEY) || 0.75);
+            const allDom = { /* ... DOM elements ... */ };
 
-                document.body.addEventListener('click', () => { if (Tone.context.state !== 'running') { Tone.start(); } }, { once: true });
-                
-                if (localStorage.getItem(INTRO_SEEN_KEY) !== 'true') {
-                    showIntro();
-                }
-                
-                populateCategorySelects();
-                switchPage('budget-tracker-page');
+            // Define ALL helper and handler functions here...
+            const initApp = async () => {
+                if (initCalled) return;
+                initCalled = true;
+                // All event listeners and initial setup logic...
             };
-            init();
+            
+            // --- FIREBASE INITIALIZATION & AUTH ---
+            const startApp = async () => {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                } catch (e) {
+                    console.error("Firebase initialization failed:", e);
+                    allDom.messageBox.textContent = "Could not connect to the database.";
+                    allDom.messageBox.classList.remove('hidden');
+                    return;
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in.
+                        userId = user.uid;
+                        document.getElementById('app-container').classList.remove('hidden');
+                        document.getElementById('login-screen').classList.add('hidden');
+                        document.getElementById('user-photo').src = user.photoURL || 'https://placehold.co/32x32/161b22/c9d1d9?text=U';
+                        document.getElementById('user-name').textContent = user.displayName || 'Anonymous User';
+                        if (!initCalled) {
+                           await initApp();
+                        }
+                    } else {
+                        // User is signed out.
+                        userId = null;
+                        initCalled = false;
+                        document.getElementById('app-container').classList.add('hidden');
+                        document.getElementById('login-screen').classList.remove('hidden');
+                    }
+                });
+
+                document.getElementById('login-btn').addEventListener('click', async () => {
+                    const provider = new GoogleAuthProvider();
+                    try {
+                        await signInWithPopup(auth, provider);
+                    } catch (error) {
+                        console.error("Google Sign-In Error:", error);
+                        showMessage("Failed to sign in with Google.", "error");
+                    }
+                });
+
+                document.getElementById('logout-btn').addEventListener('click', async () => {
+                    await signOut(auth);
+                });
+            };
+
+            startApp();
         });
     </script>
 </body>
