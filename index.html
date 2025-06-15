@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tavent (remade) v.2.0.0</title>
+    <title>Tavent (remade) v.2.0.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
@@ -170,7 +170,7 @@
                     <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                 </button>
             </div>
-            <p id="version-text" class="text-sm text-gray-500 mb-6">v.2.0.0 - Your ABM tool</p>
+            <p id="version-text" class="text-sm text-gray-500 mb-6">v.2.0.1 - Your ABM tool</p>
             <div id="nav-container" class="flex items-center border-b border-gray-700">
                 <div class="nav-tab active" data-view="budget-tracker">Budget Tracker</div>
                 <div class="nav-tab" data-view="balance-sheet">Balance Sheet</div>
@@ -565,7 +565,12 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
-                document.getElementById('version-text').textContent += ` (User: ${userId.substring(0,6)})`;
+                const versionTextEl = document.getElementById('version-text');
+                const baseText = "v.2.0.1 - Your ABM tool";
+                // Only add user ID if it's not already there to prevent duplicates
+                if (!versionTextEl.textContent.includes("User:")) {
+                    versionTextEl.textContent = `${baseText} (User: ${userId.substring(0,6)})`;
+                }
                 dataDocRef = doc(db, "artifacts", appId, "users", userId);
                 
                 if(unsubscribe) unsubscribe(); // Detach old listener if it exists
